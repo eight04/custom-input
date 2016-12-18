@@ -1,0 +1,47 @@
+{
+  "name": "custom-input",
+  "version": "0.0.0",
+  "description": "Create customized input element",
+  "keywords": [
+    "input",
+    "parser"
+  ],
+  "scripts": {
+    "test": "eslint lib/*.js",
+    "preversion": "npm test",
+    "version": "git add .",
+    "postversion": "git push --follow-tags && npm publish",
+    "build": "browserify -t babelify build/custom-input.js | n-pipe dist/custom-input.js",
+    "watch": "n-run -w lib/*.js \"npm run build\""
+  },
+  "homepage": "https://github.com/eight04/custom-input",
+  "bugs": {
+    "url": "https://github.com/eight04/custom-input/issues",
+    "email": "eight04@gmail.com"
+  },
+  "license": "MIT",
+  "author": "eight <eight04@gmail.com>",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/eight04/custom-input.git"
+  },
+  "dependencies": {
+    "diff": "^3.1.0"
+  },
+  "devDependencies": {
+    "babel-preset-env": "^1.1.4",
+    "babelify": "^7.3.0",
+    "npm-build-tools": "^2.2.5"
+  },
+  "babel": {
+    "presets": [
+      ["env", {
+        "targets": {
+            "browsers": {"ie": 8}
+        },
+        "loose": true
+      }]
+    ]
+  }
+}

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>Document</title>
+	<script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+	<script src="https://rawgit.com/timdown/rangyinputs/master/rangyinputs-jquery.js"></script>
+	<script src="dist/custom-input.js"></script>
+</head>
+<body>
+	<input type="text">
+	<output></output>
+	
+	<script>
+		var {InputMask, TextParser} = customInput;
+		
+		var tokens = [{
+			type: "number",
+			minLength: 1,
+			maxLength: 3,
+			max: 256,
+			min: 0,
+			placeholder: "___",
+			extract: o => o[0],
+			restore: (o, v) => o[0] = v,
+			add: (o, d) => o[0] += d
+		}, {
+			type: "static",
+			value: "."
+		}, {
+			type: "number",
+			minLength: 1,
+			maxLength: 3,
+			max: 256,
+			min: 0,
+			placeholder: "___",
+			extract: o => o[1],
+			restore: (o, v) => o[1] = v,
+			add: (o, d) => o[1] += d
+		}, {
+			type: "static",
+			value: "."
+		}, {
+			type: "number",
+			minLength: 1,
+			maxLength: 3,
+			max: 256,
+			min: 0,
+			placeholder: "___",
+			extract: o => o[2],
+			restore: (o, v) => o[2] = v,
+			add: (o, d) => o[2] += d
+		}, {
+			type: "static",
+			value: "."
+		}, {
+			type: "number",
+			minLength: 1,
+			maxLength: 3,
+			max: 256,
+			min: 0,
+			placeholder: "___",
+			extract: o => o[3],
+			restore: (o, v) => o[3] = v,
+			add: (o, d) => o[3] += d
+		}];
+		
+		var tp = new TextParser({
+			tokens: tokens,
+			value: [0, 0, 0, 0],
+			copyValue: o => o.slice()
+		});
+		
+		new InputMask($("input"), tp);
+		
+		tp.on("change", () => {
+			$("output").html(JSON.stringify(tp.getValue()));
+		});
+	</script>
+</body>
+</html>
