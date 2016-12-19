@@ -26,9 +26,7 @@
     "type": "git",
     "url": "https://github.com/eight04/custom-input.git"
   },
-  "dependencies": {
-    "diff": "^3.1.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "babel-preset-env": "^1.1.4",
     "babelify": "^7.3.0",
@@ -36,12 +34,17 @@
   },
   "babel": {
     "presets": [
-      ["env", {
-        "targets": {
-            "browsers": {"ie": 8}
-        },
-        "loose": true
-      }]
+      [
+        "env",
+        {
+          "targets": {
+            "browsers": {
+              "ie": 8
+            }
+          },
+          "loose": true
+        }
+      ]
     ]
   }
 }
