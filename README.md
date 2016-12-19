@@ -210,5 +210,5 @@ Convert number to string, padding with zeros and trim out text after maxLength.
 	
 Changelog
 ---------
-* Next
+* 0.1.0 (Dec 19, 2016)
 	- First release.
