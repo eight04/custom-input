@@ -186,11 +186,11 @@ Range object has two properties, start and end, showing the current state of the
 
 Return null if the element is not focused.
 
-#### IElement.setSelection(start: Number, end: Number)
+#### Element.setSelection(start: Number, end: Number)
 
 Set selection on the input. You might need to check if the input is active or some browsers will try to focus the input when selection changed.
 
-#### IElement.val([text: String])
+#### Element.val([text: String])
 
 Set/get the value of the input. Like jQuery.
 	
