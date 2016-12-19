@@ -23,7 +23,14 @@ module.exports = {
 },{"./lib/input-mask":3,"./lib/text-parser":4,"./lib/utils":5}],3:[function(require,module,exports){
 "use strict";
 
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var _require = require("./utils"),
+    Emitter = _require.Emitter;
 
 function findNearestNode(i, nodes) {
 	if (!nodes.length) return;
@@ -43,25 +50,6 @@ function findNearestNode(i, nodes) {
 	}
 
 	return right;
-}
-
-function findInputKey(a, b) {
-	if (a.length >= b.length) {
-		return;
-	}
-	var i, j, key;
-
-	for (i = 0, j = 0; i < a.length && j < b.length; i++, j++) {
-		if (a[i] == b[j]) continue;
-		if (!key) {
-			key = b[j];
-			i--;
-		} else {
-			return;
-		}
-	}
-
-	return key;
 }
 
 function matchNodes(nodes, start) {
@@ -130,10 +118,11 @@ var Selection = function () {
 	}
 
 	Selection.prototype.selectNearestNode = function selectNearestNode() {
-		var sel = this.el.getSelection(),
-		    node = findNearestNode(sel.start, this.nodes);
+		var range = this.el.getSelection();
+		if (!range) return;
+
 		this.select({
-			node: node,
+			node: findNearestNode(range.start, this.nodes),
 			start: 0,
 			end: "end"
 		});
@@ -179,10 +168,11 @@ var Selection = function () {
 	Selection.prototype.get = function get() {
 		if (!this.nodes.length) return;
 
-		var _el$getSelection = this.el.getSelection(),
-		    start = _el$getSelection.start,
-		    end = _el$getSelection.end,
-		    _matchNodes = matchNodes(this.nodes, start, end),
+		var range = this.el.getSelection();
+
+		if (!range) return;
+
+		var _matchNodes = matchNodes(this.nodes, range.start, range.end),
 		    left = _matchNodes[0],
 		    right = _matchNodes[1];
 
@@ -195,31 +185,26 @@ var Selection = function () {
 		}
 	};
 
-	Selection.prototype.atNodeEnd = function atNodeEnd(len) {
+	Selection.prototype.atNodeEnd = function atNodeEnd() {
 		if (!this.range.node) return;
-
-		if (len == null) {
-			len = this.range.node.token.maxLength || this.range.node.viewValue.length;
-		}
 
 		this.get();
 
-		var start = this.range.start == "end" ? len : this.range.start,
+		var len = this.range.node.viewValue.length,
+		    max = this.range.node.token.maxLength,
+		    start = this.range.start == "end" ? len : this.range.start,
 		    end = this.range.end == "end" ? len : this.range.end;
 
-		return start == end && start == len;
+		return start == end && start == (max != null ? max : len) || !len;
 	};
 
-	Selection.prototype.atNodeStart = function atNodeStart(len) {
+	Selection.prototype.atNodeStart = function atNodeStart() {
 		if (!this.range.node) return;
-
-		if (len == null) {
-			len = this.range.node.viewValue.length;
-		}
 
 		this.get();
 
-		var start = this.range.start == "end" ? len : this.range.start,
+		var len = this.range.node.viewValue.length,
+		    start = this.range.start == "end" ? len : this.range.start,
 		    end = this.range.end == "end" ? len : this.range.end;
 
 		return start == end && start == 0;
@@ -228,32 +213,41 @@ var Selection = function () {
 	return Selection;
 }();
 
-var InputMask = function () {
-	function InputMask(element, textParser) {
-		var _this = this;
+var InputMask = function (_Emitter) {
+	_inherits(InputMask, _Emitter);
 
-		var separators = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : "";
-
+	function InputMask() {
 		_classCallCheck(this, InputMask);
+
+		var _this = _possibleConstructorReturn(this, _Emitter.call(this));
+
+		_this._constructor.apply(_this, arguments);
+		_this.initialize();
+		return _this;
+	}
+
+	InputMask.prototype._constructor = function _constructor(element, textParser) {
+		var separators = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : "";
 
 		this.el = element;
 		this.tp = textParser;
 		this.separators = separators;
-		this.handler = {};
-
-		var nodes = textParser.getNodes().filter(function (n) {
+		this.sel = new Selection(element, textParser.getNodes().filter(function (n) {
 			return n.token.type != "static";
-		});
-		this.sel = new Selection(element, nodes);
+		}));
+	};
+
+	InputMask.prototype.initialize = function initialize() {
+		var _this2 = this;
 
 		this.el.on("mousedown", function () {
-			_this.mousedown = true;
+			_this2.mousedown = true;
 		});
 
-		this.el.on("focus", function (e) {
-			if (_this.mousedown) return; // wait mouseup then decide range
+		this.el.on("focus", function () {
+			if (_this2.mousedown) return; // wait mouseup then decide range
 			setTimeout(function () {
-				_this.sel.select({
+				_this2.sel.select({
 					start: 0,
 					end: "end"
 				});
@@ -261,72 +255,72 @@ var InputMask = function () {
 		});
 
 		this.el.on("click", function () {
-			_this.mousedown = false;
-			_this.sel.selectNearestNode();
+			_this2.mousedown = false;
+			_this2.sel.selectNearestNode();
 		});
 
 		this.el.on("input", function () {
-			_this.digest(null, _this.el.val());
+			_this2.digest(null, _this2.el.val());
 		});
 
 		this.el.on("keydown", function (e) {
 			if (e.altKey || e.ctrlKey) {
 				return;
 			}
-			if (e.keyCode == 37 || e.keyCode == 9 && e.shiftKey && _this.sel.hasPrev()) {
+			if (e.keyCode == 37 || e.keyCode == 9 && e.shiftKey && _this2.sel.hasPrev()) {
 				// Left, Shift + Tab
 				e.preventDefault();
-				_this.tryFixingError();
-				_this.sel.selectPrev();
-			} else if (e.keyCode == 39 || e.keyCode == 9 && !e.shiftKey && _this.sel.hasNext()) {
+				_this2.tryFixingError();
+				_this2.sel.selectPrev();
+			} else if (e.keyCode == 39 || e.keyCode == 9 && !e.shiftKey && _this2.sel.hasNext()) {
 				// Right, Tab
 				e.preventDefault();
-				_this.tryFixingError();
-				_this.sel.selectNext();
+				_this2.tryFixingError();
+				_this2.sel.selectNext();
 			} else if (e.keyCode == 38) {
 				// Up
 				e.preventDefault();
-				_this.sel.selectNearestNode();
-				if (_this.sel.range.node) {
-					_this.sel.range.node.add(1);
+				_this2.sel.selectNearestNode();
+				if (_this2.sel.range.node) {
+					// this.err = null;
+					_this2.sel.range.node.add(1);
 				}
-				_this.val(_this.tp.getText());
-				_this.sel.select({
+				_this2.val(_this2.tp.getText());
+				_this2.sel.select({
 					start: 0,
 					end: "end"
 				});
-				_this.emit("update");
 			} else if (e.keyCode == 40) {
 				// Down
 				e.preventDefault();
-				_this.sel.selectNearestNode();
-				if (_this.sel.range.node) {
-					_this.sel.range.node.add(-1);
+				_this2.sel.selectNearestNode();
+				if (_this2.sel.range.node) {
+					// this.err = null;
+					_this2.sel.range.node.add(-1);
 				}
-				_this.val(_this.tp.getText());
-				_this.sel.select({
+				_this2.val(_this2.tp.getText());
+				_this2.sel.select({
 					start: 0,
 					end: "end"
 				});
-				_this.emit("update");
 			} else if (e.keyCode == 36 || e.keyCode == 35) {
 				// Home or End
 				setTimeout(function () {
-					return _this.sel.selectNearestNode();
+					return _this2.sel.selectNearestNode();
 				});
 			} else if (e.keyCode == 46) {
 				// Del
-				if (_this.sel.atNodeEnd(_this.errorViewLength())) {
+				if (_this2.sel.atNodeEnd()) {
 					e.preventDefault();
-					_this.tryFixingError();
-					_this.sel.selectNext();
+					_this2.tryFixingError();
+					_this2.sel.selectNext();
 				}
 			} else if (e.keyCode == 8) {
 				// Backspace
-				if (_this.sel.atNodeStart(_this.errorViewLength())) {
+				if (_this2.sel.atNodeStart()) {
 					e.preventDefault();
-					_this.tryFixingError();
-					_this.sel.selectPrev();
+					_this2.tryFixingError();
+					_this2.sel.selectPrev();
 				}
 			}
 		});
@@ -334,8 +328,8 @@ var InputMask = function () {
 		this.el.on("keypress", function (e) {
 			var charCode = e.charCode == null ? e.keyCode : e.charCode,
 			    key = String.fromCharCode(charCode),
-			    separators = _this.separators,
-			    node = _this.sel.range.node;
+			    separators = _this2.separators,
+			    node = _this2.sel.range.node;
 
 			// check for separator only when there is a next node which is static string
 			if (node && node.next && node.next.token.type == "static") {
@@ -344,25 +338,40 @@ var InputMask = function () {
 
 			if (separators.includes(key)) {
 				e.preventDefault();
-				_this.tryFixingError();
-				_this.sel.selectNext();
+				_this2.tryFixingError();
+				_this2.sel.selectNext();
 				return;
 			}
 
 			setTimeout(function () {
-				if (_this.sel.atNodeEnd()) {
-					_this.tryFixingError();
-					_this.sel.selectNext();
+				if (_this2.sel.atNodeEnd() && _this2.sel.range.node.viewValue) {
+					_this2.tryFixingError();
+					_this2.sel.selectNext();
 				}
 			});
 		});
 
 		this.el.on("blur", function () {
 			setTimeout(function () {
-				_this.tryFixingError();
+				_this2.tryFixingError();
 			});
 		});
-	}
+
+		this.tp.on("change", function () {
+			if (!_this2.err && !_this2.inDigest) {
+				_this2.val(_this2.tp.getText());
+				_this2.sel.select();
+			}
+		});
+
+		// Init value
+		var text = this.el.val();
+		if (text) {
+			this.digest(null, text, true);
+		} else {
+			this.val(this.tp.getText());
+		}
+	};
 
 	InputMask.prototype.errorViewLength = function errorViewLength() {
 		if (this.err && this.err.viewValue != null) {
@@ -371,92 +380,10 @@ var InputMask = function () {
 		return undefined;
 	};
 
-	InputMask.prototype.digest = function digest(node, text, fixErr) {
-		var digest = 10,
-		    range;
-
-		while (digest--) {
-			this.err = null;
-			try {
-				if (node) {
-					node.parse(text);
-				} else {
-					this.tp.parse(text);
-				}
-			} catch (err) {
-				if (err.code == "NOT_INIT") {
-					break;
-				}
-				// console.log(err);
-				this.err = err;
-				if (!fixErr && (err.code == "NUMBER_TOOSHORT" || err.code == "NUMBER_TOOSMALL" || err.code == "NUMBER_MISMATCH" || err.code == "SELECT_MISMATCH")) {
-					// the user is still inputing
-					break;
-				}
-				if (err.code == "LEADING_ZERO") {
-					node = err.node;
-					text = err.properValue;
-					if (err.viewValue.length >= err.node.token.maxLength) {
-						range = {
-							node: node.nextEdit,
-							start: 0,
-							end: "end"
-						};
-					} else {
-						range = null;
-					}
-				} else if (err.code == "SELECT_INCOMPLETE") {
-					node = err.node;
-					text = err.selected;
-					this.sel.get();
-					range = {
-						end: "end"
-					};
-				} else if (err.properText) {
-					node = null;
-					text = err.properText;
-					range = null;
-				} else if (err.properValue) {
-					node = err.node;
-					text = err.properValue;
-					range = null;
-				} else {
-					if (err.code == "EMPTY") {
-						this.tp.unset();
-					}
-					if (err.node) {
-						err.node.unset();
-					}
-					node = null;
-					text = this.tp.getText();
-					range = {
-						start: 0,
-						end: "end"
-					};
-				}
-				continue;
-			}
-			break;
-		}
-
-		if (digest < 0) {
-			throw "element mask crashed! Infinite loop?";
-		}
-
-		if (!range) {
-			this.sel.get();
-		}
-
-		if (!this.err) {
-			this.val(this.tp.getText());
-		}
-
-		this.sel.select(range);
-		this.emit("update");
-	};
-
 	InputMask.prototype.val = function val(text) {
-		this.el.val(text);
+		if (this.el.val() != text) {
+			this.el.val(text);
+		}
 		this.err = null;
 	};
 
@@ -471,47 +398,99 @@ var InputMask = function () {
 		}
 	};
 
-	InputMask.prototype.on = function on(name, callback) {
-		if (!this.handler[name]) {
-			this.handler[name] = [];
-		}
-		this.handler[name].push(callback);
-	};
+	InputMask.prototype.digest = function digest(node, text, fixErr) {
+		var digest = 10,
+		    range;
 
-	InputMask.prototype.emit = function emit(name, value) {
-		if (!this.handler[name]) return;
+		this.inDigest = true;
 
-		var callback;
-		for (var _iterator2 = this.handler[name], _isArray2 = Array.isArray(_iterator2), _i2 = 0, _iterator2 = _isArray2 ? _iterator2 : _iterator2[Symbol.iterator]();;) {
-			if (_isArray2) {
-				if (_i2 >= _iterator2.length) break;
-				callback = _iterator2[_i2++];
-			} else {
-				_i2 = _iterator2.next();
-				if (_i2.done) break;
-				callback = _i2.value;
+		while (digest--) {
+			this.err = null;
+			try {
+				if (node) {
+					node.parse(text);
+				} else {
+					this.tp.parse(text);
+				}
+			} catch (err) {
+				this.emit("error", err);
+
+				this.sel.get();
+
+				if (err.code == "NOT_INIT") {
+					break;
+				}
+
+				this.err = err;
+
+				if (!fixErr && (err.code == "NUMBER_TOOSHORT" || err.code == "NUMBER_TOOSMALL" || err.code == "NUMBER_MISMATCH" || err.code == "SELECT_MISMATCH" || err.code == "LEADING_ZERO")) {
+					break;
+				}
+
+				if (err.code == "SELECT_INCOMPLETE") {
+					node = err.node;
+					text = err.selected;
+					range = { end: "end" };
+					continue;
+				}
+
+				if (err.properValue != null) {
+					node = err.node;
+					text = err.properValue;
+				} else if (err.properText != null) {
+					node = null;
+					text = err.properText;
+				} else {
+					if (err.code == "EMPTY") {
+						this.tp.unset();
+					}
+					if (err.node) {
+						err.node.unset();
+					}
+					node = null;
+					text = this.tp.getText();
+					range = { start: 0, end: "end" };
+				}
+				continue;
 			}
+			break;
+		}
 
-			callback(value);
+		if (!this.err) {
+			this.val(this.tp.getText());
+			if (digest < 9) {
+				this.sel.select(range);
+			}
+		}
+
+		this.inDigest = false;
+
+		if (digest < 0) {
+			throw new Error("InputMask.digest crashed! Infinite loop on " + text);
 		}
 	};
 
 	return InputMask;
-}();
+}(Emitter);
 
 module.exports = {
 	InputMask: InputMask
 };
 
-},{}],4:[function(require,module,exports){
+},{"./utils":5}],4:[function(require,module,exports){
 "use strict";
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var _require = require("./utils"),
-    num2str = _require.num2str;
+    num2str = _require.num2str,
+    Emitter = _require.Emitter;
 
 function getMatch(str, pos, pattern) {
 	var i = 0,
@@ -587,7 +566,8 @@ function parseNode(text, token, pos) {
 				code: "NUMBER_TOOSMALL",
 				message: "The number is too small",
 				value: +value,
-				viewValue: value
+				viewValue: value,
+				properValue: num2str(token.min, token.minLength, token.maxLength)
 			};
 		}
 
@@ -599,6 +579,17 @@ function parseNode(text, token, pos) {
 				value: +value,
 				viewValue: value,
 				properValue: num2str(+value, token.minLength, token.maxLength)
+			};
+		}
+
+		if (+value > token.max) {
+			return {
+				err: 1,
+				code: "NUMBER_TOOLARGE",
+				message: "The number is too large",
+				value: +value,
+				viewValue: value,
+				properValue: num2str(token.max, token.minLength, token.maxLength)
 			};
 		}
 
@@ -682,14 +673,6 @@ function parseNodes(nodes, text) {
 			message: "Text is too long",
 			text: text
 		};
-	}
-
-	// throw error
-	var i;
-	for (i = 0; i < result.length; i++) {
-		if (result[i].err) {
-			throw result[i];
-		}
 	}
 
 	return result;
@@ -795,8 +778,31 @@ var Node = function () {
 	};
 
 	Node.prototype.add = function add(diff) {
+		var value = this.parser.copyValue(this.parser.value),
+		    nodeValue;
+
 		this.empty = false;
-		var value = addValue(this.parser.value, this.token, diff);
+
+		value = addValue(value, this.token, diff);
+		nodeValue = this.token.extract(value);
+
+		// min/max check
+		var min, max;
+		if (this.token.type == "number") {
+			min = this.token.min;
+			max = this.token.max;
+		} else if (this.token.type == "select") {
+			min = 1;
+			max = this.token.select.length;
+		}
+
+		if (nodeValue < min) {
+			value = restoreValue(value, this.token, min);
+		}
+		if (nodeValue > max) {
+			value = restoreValue(value, this.token, max);
+		}
+
 		this.parser.setValue(value, false);
 	};
 
@@ -870,8 +876,20 @@ function nocopy(o) {
 
 // a stated text parser
 
-var TextParser = function () {
-	function TextParser(_ref) {
+var TextParser = function (_Emitter) {
+	_inherits(TextParser, _Emitter);
+
+	function TextParser() {
+		_classCallCheck(this, TextParser);
+
+		var _this = _possibleConstructorReturn(this, _Emitter.call(this));
+
+		_this._constructor.apply(_this, arguments);
+		_this.initialize();
+		return _this;
+	}
+
+	TextParser.prototype._constructor = function _constructor(_ref) {
 		var tokens = _ref.tokens,
 		    _ref$noEmpty = _ref.noEmpty,
 		    noEmpty = _ref$noEmpty === undefined ? false : _ref$noEmpty,
@@ -880,10 +898,8 @@ var TextParser = function () {
 		    _ref$copyValue = _ref.copyValue,
 		    copyValue = _ref$copyValue === undefined ? nocopy : _ref$copyValue;
 
-		_classCallCheck(this, TextParser);
-
 		if (!tokens || !tokens.length) {
-			throw new Error("`tokens` is required");
+			throw new Error("option.tokens is required");
 		}
 		this.tokens = tokens;
 		this.nodes = createNodes(this, tokens);
@@ -891,9 +907,12 @@ var TextParser = function () {
 		this.text = text;
 		this.noEmpty = noEmpty;
 		this.copyValue = copyValue;
+		this.err = false;
+	};
 
-		this.setValue(value);
-	}
+	TextParser.prototype.initialize = function initialize() {
+		this.setValue(this.value);
+	};
 
 	TextParser.prototype.parse = function parse(text) {
 		if (!text) {
@@ -906,43 +925,62 @@ var TextParser = function () {
 
 		var result, i;
 
-		result = parseNodes(this.nodes, text, this.value);
-
-		// check emptiness
-		var empties = result.filter(function (r) {
-			return r.empty;
-		});
-		if (empties.length && this.noEmpty) {
-			throw {
-				code: "NOT_INIT_FORBIDDEN",
-				message: "Empty node is forbidden",
-				text: text,
-				node: empties[0]
-			};
-		}
+		result = parseNodes(this.nodes, text);
 
 		// grab changed nodes
-		var changed = [];
+		var changed = [],
+		    comparer;
+
+		if (this.err) {
+			comparer = parseNodes(this.nodes, this.text);
+		} else {
+			comparer = this.nodes;
+		}
+
 		for (i = 0; i < result.length; i++) {
-			if (!result[i].empty && result[i].viewValue != this.nodes[i].viewValue) {
-				changed.push({
-					token: this.nodes[i].token,
-					result: result[i]
-				});
+			if (!result[i].empty && result[i].viewValue != comparer[i].viewValue) {
+				// expose token for sorting and consistent check
+				result[i].token = this.nodes[i].token;
+				changed.push(result[i]);
 			}
 		}
 
-		// apply change
+		// grab empty nodes
+		var empties = result.filter(function (r) {
+			return r.empty;
+		}),
+		    errors = result.filter(function (r) {
+			return r.err;
+		});
+
+		// copy result value into nodes
+		for (i = 0; i < result.length; i++) {
+			this.nodes[i].value = result[i].value;
+			this.nodes[i].viewValue = result[i].viewValue;
+			this.nodes[i].offset = result[i].pos;
+			this.nodes[i].empty = result[i].empty;
+		}
+
+		// throw error
+		if (errors.length) {
+			this.err = true;
+			throw errors[0];
+		} else {
+			this.err = false;
+		}
+
+		// sort result
 		changed.sort(function (a, b) {
-			if (b.result.empty) {
+			if (b.empty) {
 				return -1;
 			}
-			if (a.result.empty) {
+			if (a.empty) {
 				return 1;
 			}
 			return (b.token.prior || 0) - (a.token.prior || 0);
 		});
 
+		// consistent check
 		var c,
 		    value = this.copyValue(this.value);
 		for (var _iterator4 = changed, _isArray4 = Array.isArray(_iterator4), _i4 = 0, _iterator4 = _isArray4 ? _iterator4 : _iterator4[Symbol.iterator]();;) {
@@ -955,14 +993,14 @@ var TextParser = function () {
 				c = _i4.value;
 			}
 
-			value = restoreValue(value, c.token, c.result.value);
+			value = restoreValue(value, c.token, c.value);
 		}
 
-		// Consistent check
 		var newText = formatNodes(value, result).map(function (r) {
 			return r.viewValue;
 		}).join("");
 		if (text != newText) {
+			this.err = true;
 			throw {
 				code: "INCONSISTENT_INPUT",
 				message: "Successfully parsed but the output text doesn't match the input",
@@ -972,15 +1010,11 @@ var TextParser = function () {
 			};
 		}
 
-		// everything is ok, copy result value into nodes
-		for (i = 0; i < result.length; i++) {
-			this.nodes[i].value = result[i].value;
-			this.nodes[i].viewValue = result[i].viewValue;
-			this.nodes[i].offset = result[i].pos;
-			this.nodes[i].empty = result[i].empty;
-		}
+		// Done. Manipulate value and text
 		this.text = text;
 		this.value = value;
+
+		this.emit("change");
 
 		// throw not_init error
 		if (empties.length) {
@@ -1013,6 +1047,8 @@ var TextParser = function () {
 		}
 		this.value = value;
 		this.text = text;
+
+		this.emit("change");
 
 		return this;
 	};
@@ -1088,7 +1124,7 @@ var TextParser = function () {
 	};
 
 	return TextParser;
-}();
+}(Emitter);
 
 module.exports = {
 	TextParser: TextParser
@@ -1096,6 +1132,8 @@ module.exports = {
 
 },{"./utils":5}],5:[function(require,module,exports){
 "use strict";
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 module.exports = {
 	num2str: function num2str(num, minLength, maxLength) {
@@ -1109,7 +1147,59 @@ module.exports = {
 			}
 		}
 		return num;
-	}
+	},
+
+	Emitter: function () {
+		function Emitter() {
+			_classCallCheck(this, Emitter);
+
+			this.handler = {};
+		}
+
+		Emitter.prototype.on = function on(eventType, callback) {
+			if (!this.handler[eventType]) {
+				this.handler[eventType] = [];
+			}
+			this.handler[eventType].push(callback);
+			return this;
+		};
+
+		Emitter.prototype.off = function off(eventType, callback) {
+			if (!this.handler[eventType]) return;
+
+			var i = this.handler.indexOf(callback);
+			if (i < 0) return;
+			this.handler[eventType].splice(i, 1);
+			return this;
+		};
+
+		Emitter.prototype.emit = function emit(eventType, value) {
+			if (!this.handler[eventType]) return;
+			for (var _iterator = this.handler[eventType], _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
+				var _ref;
+
+				if (_isArray) {
+					if (_i >= _iterator.length) break;
+					_ref = _iterator[_i++];
+				} else {
+					_i = _iterator.next();
+					if (_i.done) break;
+					_ref = _i.value;
+				}
+
+				var callback = _ref;
+
+				try {
+					callback(value);
+				} catch (err) {
+					console.error(err);
+				}
+			}
+			return this;
+		};
+
+		return Emitter;
+	}()
 };
 
 },{}]},{},[1]);
