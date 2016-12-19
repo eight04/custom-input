@@ -10,73 +10,135 @@
 	<script src="dist/custom-input.js"></script>
 </head>
 <body>
-	<input type="text">
-	<output></output>
+	<label>IP Address: <input type="text" id="ip"></label>
+	<pre>Output: <output id="ip-output"></output></pre>
 	
 	<script>
-		var {InputMask, TextParser} = customInput;
-		
-		var tokens = [{
-			type: "number",
-			minLength: 1,
-			maxLength: 3,
-			max: 256,
-			min: 0,
-			placeholder: "___",
-			extract: o => o[0],
-			restore: (o, v) => o[0] = v,
-			add: (o, d) => o[0] += d
-		}, {
-			type: "static",
-			value: "."
-		}, {
-			type: "number",
-			minLength: 1,
-			maxLength: 3,
-			max: 256,
-			min: 0,
-			placeholder: "___",
-			extract: o => o[1],
-			restore: (o, v) => o[1] = v,
-			add: (o, d) => o[1] += d
-		}, {
-			type: "static",
-			value: "."
-		}, {
-			type: "number",
-			minLength: 1,
-			maxLength: 3,
-			max: 256,
-			min: 0,
-			placeholder: "___",
-			extract: o => o[2],
-			restore: (o, v) => o[2] = v,
-			add: (o, d) => o[2] += d
-		}, {
-			type: "static",
-			value: "."
-		}, {
-			type: "number",
-			minLength: 1,
-			maxLength: 3,
-			max: 256,
-			min: 0,
-			placeholder: "___",
-			extract: o => o[3],
-			restore: (o, v) => o[3] = v,
-			add: (o, d) => o[3] += d
-		}];
-		
-		var tp = new TextParser({
-			tokens: tokens,
-			value: [0, 0, 0, 0],
-			copyValue: o => o.slice()
+		$(function(){
+			var {InputMask, TextParser} = customInput;
+			
+			var tokens = [{
+				type: "number",
+				minLength: 1,
+				maxLength: 3,
+				max: 256,
+				min: 0,
+				placeholder: "___",
+				extract: o => o[0],
+				restore: (o, v) => o[0] = v,
+				add: (o, d) => o[0] += d
+			}, {
+				type: "static",
+				value: "."
+			}, {
+				type: "number",
+				minLength: 1,
+				maxLength: 3,
+				max: 256,
+				min: 0,
+				placeholder: "___",
+				extract: o => o[1],
+				restore: (o, v) => o[1] = v,
+				add: (o, d) => o[1] += d
+			}, {
+				type: "static",
+				value: "."
+			}, {
+				type: "number",
+				minLength: 1,
+				maxLength: 3,
+				max: 256,
+				min: 0,
+				placeholder: "___",
+				extract: o => o[2],
+				restore: (o, v) => o[2] = v,
+				add: (o, d) => o[2] += d
+			}, {
+				type: "static",
+				value: "."
+			}, {
+				type: "number",
+				minLength: 1,
+				maxLength: 3,
+				max: 256,
+				min: 0,
+				placeholder: "___",
+				extract: o => o[3],
+				restore: (o, v) => o[3] = v,
+				add: (o, d) => o[3] += d
+			}];
+			
+			var tp = new TextParser({
+				tokens: tokens,
+				value: [0, 0, 0, 0],
+				copyValue: o => o.slice()
+			});
+			
+			new InputMask($("#ip"), tp);
+			
+			tp.on("change", () => {
+				$("#ip-output").html(JSON.stringify(tp.getValue()));
+			});
+			
+			$("#ip-output").html(JSON.stringify(tp.getValue()));
+			
+			// try tp.parse in browser console
+			window.tp = tp;
 		});
-		
-		new InputMask($("input"), tp);
-		
-		tp.on("change", () => {
-			$("output").html(JSON.stringify(tp.getValue()));
+	</script>
+	
+	<label>Select list: <input type="text" id="select"></label>
+	<pre>Output: <output id="select-output"></output></pre>
+	
+	<script>
+		$(function(){
+			var {InputMask, TextParser} = customInput;
+			
+			var tokens = [{
+				type: "select",
+				select: ["Apple", "Banana", "Cat", "Dog"],
+				extract: o => o[0],
+				restore: (o, v) => o[0] = v,
+				add: (o, v) => o[0] += v,
+				placeholder: "<Pick an item>"
+			}, {
+				type: "static",
+				value: "-"
+			}, {
+				type: "select",
+				select: ["XXX", "XYY", "XYZ"],
+				extract: o => o[1],
+				restore: (o, v) => o[1] = v,
+				add: (o, v) => o[1] += v,
+				placeholder: "<XYZ>"
+			}, {
+				type: "static",
+				value: "-"
+			}, {
+				type: "select",
+				select: ["123", "456", "789"],
+				extract: o => o[2],
+				restore: (o, v) => o[2] = v,
+				add: (o, v) => o[2] += v,
+				placeholder: "<Select a number>"
+			}];
+			
+			var tp = new TextParser({
+				tokens: tokens,
+				value: [1, 1, 1],
+				copyValue: o => o.slice()
+			});
+			
+			new InputMask($("#select"), tp);
+			
+			tp.on("change", () => {
+				$("#select-output").html(JSON.stringify(tp.getValue()));
+			});
+			
+			$("#select-output").html(JSON.stringify(tp.getValue()));
+			
+			// try tp.parse in browser console
+			window.tp2 = tp;
 		});
 	</script>
 </body>
