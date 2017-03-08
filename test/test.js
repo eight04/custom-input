@@ -97,8 +97,7 @@ describe("InputMask", () => {
 		function test(text, event, value) {
 			return new Promise(resolve => {
 				var handle = event == "change" ? parser : mask;
-				handle.on(event, function callback(result) {
-					handle.off(event, callback);
+				handle.once(event, result => {
 					if (event == "change") {
 						assert.deepEqual(value, result);
 					} else {
