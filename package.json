@@ -33,20 +33,5 @@
     "browserify": "^14.1.0",
     "mocha": "^3.2.0",
     "npm-build-tools": "^2.2.5"
-  },
-  "babel": {
-    "presets": [
-      [
-        "env",
-        {
-          "targets": {
-            "browsers": {
-              "ie": 8
-            }
-          },
-          "loose": true
-        }
-      ]
-    ]
   }
 }
