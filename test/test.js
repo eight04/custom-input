@@ -111,7 +111,7 @@ describe("InputMask", () => {
 		}
 			
 		return test("192.168.0.1", "change", [192, 168, 0, 1]).then(
-			() => test("...", "error", "NOT_INIT")
+			() => test("...", "digest", "NOT_INIT")
 		);
 	});
 });
