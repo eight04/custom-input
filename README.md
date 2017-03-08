@@ -170,7 +170,7 @@ Arguments:
 	
 ### InputMask events
 
-* error - get parsing error while digesting. It might fire multiple times during one digest.
+* digest - get parsing error while digesting. It might fire multiple times during one digest.
 
 ### Element interface
 
