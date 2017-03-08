@@ -6,7 +6,9 @@
 					"ie": 8
 				}
 			},
-			"loose": true
+			"loose": true,
+			"modules": false
 		}]
-	]
+	],
+	"plugins": ["external-helpers"]
 }

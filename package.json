@@ -11,7 +11,7 @@
     "preversion": "npm test",
     "version": "git add .",
     "postversion": "git push --follow-tags && npm publish",
-    "build": "browserify -t babelify -s customInput index.js | n-pipe dist/custom-input.js",
+    "build": "rollup -c",
     "watch": "n-run -w lib/*.js \"npm run build\""
   },
   "homepage": "https://github.com/eight04/custom-input",
@@ -28,10 +28,13 @@
   },
   "dependencies": {},
   "devDependencies": {
+    "babel-plugin-external-helpers": "^6.22.0",
     "babel-preset-env": "^1.1.4",
-    "babelify": "^7.3.0",
-    "browserify": "^14.1.0",
     "mocha": "^3.2.0",
-    "npm-build-tools": "^2.2.5"
+    "npm-build-tools": "^2.2.5",
+    "rollup": "^0.41.4",
+    "rollup-plugin-babel": "^2.7.1",
+    "rollup-plugin-commonjs": "^7.1.0",
+    "rollup-plugin-node-resolve": "^2.0.0"
   }
 }
