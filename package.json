@@ -9,7 +9,7 @@
   "scripts": {
     "test": "eslint **/*.js && mocha",
     "preversion": "npm test",
-    "version": "git add .",
+    "version": "npm run build && git add .",
     "postversion": "git push --follow-tags && npm publish",
     "build": "browserify -t babelify -s customInput index.js | n-pipe dist/custom-input.js",
     "watch": "n-run -w lib/*.js \"npm run build\""
