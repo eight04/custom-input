@@ -5,9 +5,21 @@ A library helps you create custom input elements in the browser. Add mask and va
 
 It has 2 components, *InputMask* and *TextParser*. Import them with `require`:
 
-	var {InputMask, TextParser} = require("custom-input");
+```javascript
+var {InputMask, TextParser} = require("custom-input");
+```
 
-The pre-built dist is compatbible with IE 8 by transpiling using Babel and babel-polyfill. Also it exports an Angular 1 module, which is used by [angular-datetime](https://github.com/eight04/angular-datetime).
+Or you can use the pre-built dist:
+
+```html
+<!-- export cusomInput into global -->
+<script src="path/to/custom-input/dist/custom-input.js"></script>
+```
+```javascript
+var {InputMask, TextParser} = customInput;
+```
+
+The pre-built dist is compatbible with IE 8 by transpiling using Babel and babel-polyfill.
 
 Installation
 ------------
@@ -17,11 +29,13 @@ Installation
 Demo
 ----
 
-A small example shows how it works:
+A small example showing how it works:
 https://rawgit.com/eight04/custom-input/master/demo.html
 
 API reference
 -------------
+
+Both TextParser and InputMask extend node's [EventEmitter](https://nodejs.org/api/events.html).
 
 ### TextParser
 
@@ -180,6 +194,16 @@ The Element interface wraps native input element and exposes some methods simila
 
 Wrap addEventListener. InputMask will listen to `input` event for text update, you might want to proxy it for cross browser compatibility.
 
+InputMask uses following events:
+
+* mousedown
+* click
+* focus
+* input
+* keydown
+* keypress
+* blur
+
 #### Element.getSelection() => Range object or null
 
 Range object has two properties, start and end, showing the current state of the selection.
@@ -196,19 +220,17 @@ Set/get the value of the input. Like jQuery.
 	
 ### utils
 
-#### utils.Emitter
-
-A small class to create event pattern. Both InputMask and TextParser extends Emitter.
-
-* Emitter.on(eventType, callback) - Add event listener.
-* Emitter.off(eventType, callbacK) - Remove event listener.
-* Emitter.emit(eventType, value) - Execute listener callback.
-
 #### utils.num2str(number, minLength, maxLength) => String
 
 Convert number to string, padding with zeros and trim out text after maxLength.
 	
 Changelog
 ---------
+* 0.2.0 (Mar 9, 2017)
+	- Allow using empty string as placeholder
+	- The "change" event of TextParser now sends model value to listener.
+	- **Drop utils.Emitter. Use node's [events](https://nodejs.org/api/events.html).**
+	- **Change the event name of InputMask: error -> digest.**
+	- **Drop angular module, always use window.customInput.**
 * 0.1.0 (Dec 19, 2016)
 	- First release.
