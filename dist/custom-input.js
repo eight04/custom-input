@@ -767,7 +767,7 @@ var Node = function () {
 
 		this.empty = false;
 
-		var value = restoreValue(this.parser.copyValue(this.parser.value), this.token, result.value);
+		var value = restoreValue(this.parser.copyValue(this.parser.value), this.token, result.value, this.parser);
 		this.parser.setValue(value, false);
 	};
 
@@ -777,7 +777,7 @@ var Node = function () {
 
 		this.empty = false;
 
-		value = addValue(value, this.token, diff);
+		value = addValue(value, this.token, diff, this.parser);
 		nodeValue = this.token.extract(value);
 
 		// min/max check
@@ -791,10 +791,10 @@ var Node = function () {
 		}
 
 		if (nodeValue < min) {
-			value = restoreValue(value, this.token, min);
+			value = restoreValue(value, this.token, min, this.parser);
 		}
 		if (nodeValue > max) {
-			value = restoreValue(value, this.token, max);
+			value = restoreValue(value, this.token, max, this.parser);
 		}
 
 		this.parser.setValue(value, false);
@@ -803,21 +803,21 @@ var Node = function () {
 	return Node;
 }();
 
-function addValue(o, tk, v) {
+function addValue(o, tk, v, p) {
 	if ((typeof o === "undefined" ? "undefined" : _typeof(o)) == "object") {
-		tk.add(o, v);
+		tk.add(o, v, p);
 		return o;
 	} else {
-		return tk.add(o, v);
+		return tk.add(o, v, p);
 	}
 }
 
-function restoreValue(o, tk, v) {
+function restoreValue(o, tk, v, p) {
 	if ((typeof o === "undefined" ? "undefined" : _typeof(o)) == "object") {
-		tk.restore(o, v);
+		tk.restore(o, v, p);
 		return o;
 	} else {
-		return tk.restore(o, v);
+		return tk.restore(o, v, p);
 	}
 }
 
@@ -868,6 +868,32 @@ function nocopy(o) {
 	return o;
 }
 
+function createNameMap(nodes) {
+	var map = new Map();
+	for (var _iterator4 = nodes, _isArray4 = Array.isArray(_iterator4), _i4 = 0, _iterator4 = _isArray4 ? _iterator4 : _iterator4[Symbol.iterator]();;) {
+		var _ref;
+
+		if (_isArray4) {
+			if (_i4 >= _iterator4.length) break;
+			_ref = _iterator4[_i4++];
+		} else {
+			_i4 = _iterator4.next();
+			if (_i4.done) break;
+			_ref = _i4.value;
+		}
+
+		var node = _ref;
+
+		var l = map.get(node.token.name);
+		if (!l) {
+			l = [];
+			map.set(node.token.name, l);
+		}
+		l.push(node);
+	}
+	return map;
+}
+
 // a stated text parser
 
 var TextParser = function (_Emitter) {
@@ -883,20 +909,21 @@ var TextParser = function (_Emitter) {
 		return _this;
 	}
 
-	TextParser.prototype._constructor = function _constructor(_ref) {
-		var tokens = _ref.tokens,
-		    _ref$noEmpty = _ref.noEmpty,
-		    noEmpty = _ref$noEmpty === undefined ? false : _ref$noEmpty,
-		    value = _ref.value,
-		    text = _ref.text,
-		    _ref$copyValue = _ref.copyValue,
-		    copyValue = _ref$copyValue === undefined ? nocopy : _ref$copyValue;
+	TextParser.prototype._constructor = function _constructor(_ref2) {
+		var tokens = _ref2.tokens,
+		    _ref2$noEmpty = _ref2.noEmpty,
+		    noEmpty = _ref2$noEmpty === undefined ? false : _ref2$noEmpty,
+		    value = _ref2.value,
+		    text = _ref2.text,
+		    _ref2$copyValue = _ref2.copyValue,
+		    copyValue = _ref2$copyValue === undefined ? nocopy : _ref2$copyValue;
 
 		if (!tokens || !tokens.length) {
 			throw new Error("option.tokens is required");
 		}
 		this.tokens = tokens;
 		this.nodes = createNodes(this, tokens);
+		this.nameMap = createNameMap(this.nodes);
 		this.value = value;
 		this.text = text;
 		this.noEmpty = noEmpty;
@@ -977,17 +1004,17 @@ var TextParser = function (_Emitter) {
 		// consistent check
 		var c,
 		    value = this.copyValue(this.value);
-		for (var _iterator4 = changed, _isArray4 = Array.isArray(_iterator4), _i4 = 0, _iterator4 = _isArray4 ? _iterator4 : _iterator4[Symbol.iterator]();;) {
-			if (_isArray4) {
-				if (_i4 >= _iterator4.length) break;
-				c = _iterator4[_i4++];
+		for (var _iterator5 = changed, _isArray5 = Array.isArray(_iterator5), _i5 = 0, _iterator5 = _isArray5 ? _iterator5 : _iterator5[Symbol.iterator]();;) {
+			if (_isArray5) {
+				if (_i5 >= _iterator5.length) break;
+				c = _iterator5[_i5++];
 			} else {
-				_i4 = _iterator4.next();
-				if (_i4.done) break;
-				c = _i4.value;
+				_i5 = _iterator5.next();
+				if (_i5.done) break;
+				c = _i5.value;
 			}
 
-			value = restoreValue(value, c.token, c.value);
+			value = restoreValue(value, c.token, c.value, this);
 		}
 
 		var newText = formatNodes(value, result).map(function (r) {
@@ -1069,14 +1096,14 @@ var TextParser = function (_Emitter) {
 
 	TextParser.prototype.isInit = function isInit() {
 		var node;
-		for (var _iterator5 = this.nodes, _isArray5 = Array.isArray(_iterator5), _i5 = 0, _iterator5 = _isArray5 ? _iterator5 : _iterator5[Symbol.iterator]();;) {
-			if (_isArray5) {
-				if (_i5 >= _iterator5.length) break;
-				node = _iterator5[_i5++];
+		for (var _iterator6 = this.nodes, _isArray6 = Array.isArray(_iterator6), _i6 = 0, _iterator6 = _isArray6 ? _iterator6 : _iterator6[Symbol.iterator]();;) {
+			if (_isArray6) {
+				if (_i6 >= _iterator6.length) break;
+				node = _iterator6[_i6++];
 			} else {
-				_i5 = _iterator5.next();
-				if (_i5.done) break;
-				node = _i5.value;
+				_i6 = _iterator6.next();
+				if (_i6.done) break;
+				node = _i6.value;
 			}
 
 			if (node.token.type != "static" && node.empty) {
@@ -1088,14 +1115,14 @@ var TextParser = function (_Emitter) {
 
 	TextParser.prototype.unset = function unset() {
 		var node;
-		for (var _iterator6 = this.nodes, _isArray6 = Array.isArray(_iterator6), _i6 = 0, _iterator6 = _isArray6 ? _iterator6 : _iterator6[Symbol.iterator]();;) {
-			if (_isArray6) {
-				if (_i6 >= _iterator6.length) break;
-				node = _iterator6[_i6++];
+		for (var _iterator7 = this.nodes, _isArray7 = Array.isArray(_iterator7), _i7 = 0, _iterator7 = _isArray7 ? _iterator7 : _iterator7[Symbol.iterator]();;) {
+			if (_isArray7) {
+				if (_i7 >= _iterator7.length) break;
+				node = _iterator7[_i7++];
 			} else {
-				_i6 = _iterator6.next();
-				if (_i6.done) break;
-				node = _i6.value;
+				_i7 = _iterator7.next();
+				if (_i7.done) break;
+				node = _i7.value;
 			}
 
 			node.empty = true;
@@ -1113,7 +1140,10 @@ var TextParser = function (_Emitter) {
 		return this.value;
 	};
 
-	TextParser.prototype.getNodes = function getNodes() {
+	TextParser.prototype.getNodes = function getNodes(name) {
+		if (name) {
+			return this.nameMap.get(name);
+		}
 		return this.nodes;
 	};
 
