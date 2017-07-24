@@ -230,6 +230,10 @@ Convert number to string, padding with zeros and trim out text after maxLength.
 	
 Changelog
 ---------
+* 0.2.1 (Jul 24, 2017)
+	- Add `textParser` arg to `token.add` and `token.restore`.
+	- Add `name` attribute to `Node`.
+	- Add `name` arg to `TextParser.getNodes`.
 * 0.2.0 (Mar 9, 2017)
 	- Allow using empty string as placeholder
 	- The "change" event of TextParser now sends model value to listener.
