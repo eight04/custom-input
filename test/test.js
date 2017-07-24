@@ -5,6 +5,7 @@ var assert = require("assert"),
 function createTextParser(options) {
 	function num(i) {
 		return Object.assign({
+			name: "num",
 			type: "number",
 			minLength: 1,
 			maxLength: 3,
@@ -19,6 +20,7 @@ function createTextParser(options) {
 	
 	function dot() {
 		return {
+			name: "dot",
 			type: "static",
 			value: "."
 		};
@@ -84,6 +86,14 @@ describe("TextParser", () => {
 			() => parser.parse(".0.0.1"),
 			err => err.code == "NOT_INIT"
 		);
+	});
+	
+	it("getNodes with name", () => {
+		var parser = createTextParser();
+		
+		assert.equal(parser.getNodes().length, 7);
+		assert.equal(parser.getNodes("num").length, 4);
+		assert.equal(parser.getNodes("dot").length, 3);
 	});
 });
 

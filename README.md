@@ -81,9 +81,9 @@ Return true if there is no empty node.
 
 Mark every nodes empty.
 
-#### TextParser.getNodes() => Array of Node
+#### TextParser.getNodes([name: string]) => Array of Node
 
-Get node list.
+Get node list. If `name` is provided, return the nodes having the same name.
 
 ### TextParser events
 
@@ -92,6 +92,10 @@ Get node list.
 ### Token
 
 A token is an object that contains special information for parsing. Each token may represents a static string, a number, or a choice list.
+
+#### token.name: String, optional
+
+Optional name. See `TextParser.getNodes()`.
 
 #### token.type: String, required
 
