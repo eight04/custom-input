@@ -5,6 +5,7 @@ var assert = require("assert"),
 function createTextParser(options) {
 	function num(i) {
 		return Object.assign({
+			i: i,
 			name: "num",
 			type: "number",
 			minLength: 1,
@@ -94,6 +95,21 @@ describe("TextParser", () => {
 		assert.equal(parser.getNodes().length, 7);
 		assert.equal(parser.getNodes("num").length, 4);
 		assert.equal(parser.getNodes("dot").length, 3);
+	});
+	
+	it("add/restore test", () => {
+		var parser = createTextParser({
+			restore(o, v, _parser) {
+				assert.equal(_parser, parser);
+				o[this.i] = v;
+			},
+			add(o, d, _parser) {
+				assert.equal(_parser, parser);
+				o[this.i] += d;
+			}
+		});
+		parser.parse("192.168.0.1");
+		parser.getNodes()[0].add(1);
 	});
 });
 

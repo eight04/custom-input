@@ -143,11 +143,11 @@ Following functions are used to manipulate model value.
 
 A function that can extract node value from the model. It is used to convert model value to string.
 
-#### token.add(model, diff: Number) => model, required
+#### token.add(model, diff: Number, parser: TextParser) => model, required
 
 A function that can add node value to the model.
 
-#### token.restore(model, nodeValue: number) => model, required
+#### token.restore(model, nodeValue: number, parser: TextParser) => model, required
 
 A function that can restore node value to the model.
 
