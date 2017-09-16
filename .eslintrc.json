@@ -10,5 +10,11 @@
 	},
 	"extends": [
 		"eslint:recommended"
-	]
+	],
+	"overrides": [{
+		"files": ["**/rollup.config.js"],
+		"parserOptions": {
+			"sourceType": "module"
+		}
+	}]
 }

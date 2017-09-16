@@ -14,6 +14,14 @@ export default {
 		resolve(),
 		commonjs(),
 		babel(),
+		// https://github.com/rollup/rollup/issues/1595
+		{
+			name: "rollup-plugin-trim-async-generator",
+			transform(code, id) {
+				if (id != "\0babelHelpers") return;
+				return code.replace(/export var asyncGenerator[\s\S]*?}\(\);/, "");
+			}
+		},
 		uglify()
 	]
 };
