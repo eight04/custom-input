@@ -21,7 +21,7 @@ Or you can use the pre-built dist:
 var {InputMask, TextParser} = customInput;
 ```
 
-The pre-built dist is compatbible with IE 8 by transpiling using Babel and babel-polyfill.
+The pre-built dist is compatible with IE 8 by transpiling using Babel and babel-polyfill.
 
 Installation
 ------------
