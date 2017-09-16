@@ -232,6 +232,8 @@ Convert number to string, padding with zeros and trim out text after maxLength.
 	
 Changelog
 ---------
+* 0.3.1 (Sep 17, 2017)
+	- Fix: use unpkg field in package.json.
 * 0.3.0 (Sep 17, 2017)
 	- **Change: replace node's events with event-lite.**
 * 0.2.1 (Jul 24, 2017)

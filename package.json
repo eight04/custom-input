@@ -22,7 +22,7 @@
   "license": "MIT",
   "author": "eight <eight04@gmail.com>",
   "main": "index.js",
-  "browser": "dist/custom-input.js",
+  "unpkg": "dist/custom-input.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/eight04/custom-input.git"
