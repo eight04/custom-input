@@ -37,7 +37,7 @@ https://rawgit.com/eight04/custom-input/master/demo.html
 API reference
 -------------
 
-Both TextParser and InputMask extend node's [EventEmitter](https://nodejs.org/api/events.html).
+Both TextParser and InputMask extend [event-lite](https://www.npmjs.com/package/event-lite).
 
 ### TextParser
 
@@ -232,6 +232,8 @@ Convert number to string, padding with zeros and trim out text after maxLength.
 	
 Changelog
 ---------
+* 0.3.0 (Sep 17, 2017)
+	- **Change: replace node's events with event-lite.**
 * 0.2.1 (Jul 24, 2017)
 	- Add `textParser` arg to `token.add` and `token.restore`.
 	- Add `name` attribute to `Node`.
