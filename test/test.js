@@ -30,7 +30,7 @@ function keyEvent(keyCode) {
   }
   return {
     keyCode,
-    preventDefault: () => {}
+    preventDefault: sinon.fake()
   };
 }
 	
@@ -211,26 +211,24 @@ describe("InputMask", () => {
     assert.deepStrictEqual(element.getSelection(), {start: 2, end: 3});
   });
   
-  it("display placeholder after delete", async () => {
+  it("display placeholder after delete entire node", async () => {
     const parser = new TextParser({
       tokens: [number(0), number(1)],
-      value: [0, 0],
+      value: [1, 2],
       copyValue: o => o.slice()
     });
     const element = new Element;
     new InputMask(element, parser);
     
-    element.val("12");
     element.setSelection(0, 0);
     element.emit("focus");
     await timeout();
     
     assert.deepStrictEqual(element.getSelection(), {start: 0, end: 1});
     
-    element.emit("keydown", {keyCode: 46});
-    element.val("2");
-    element.setSelection(0, 0);
-    element.emit("input");
+    const e = keyEvent(46);
+    element.emit("keydown", e);
+    assert.equal(e.preventDefault.callCount, 1);
     await timeout();
     
     element.emit("blur");
