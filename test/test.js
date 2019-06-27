@@ -202,14 +202,21 @@ describe("InputMask", () => {
     new InputMask(element, parser);
     
     element.val("12");
-    element.setSelection(0, 1);
+    element.setSelection(0, 0);
+    element.emit("focus");
+    await timeout();
+    
+    assert.deepStrictEqual(element.getSelection(), {start: 0, end: 1});
+    
     element.emit("keydown", {keyCode: 46});
     element.val("2");
     element.setSelection(0, 0);
     element.emit("input");
     await timeout();
+    
     element.emit("blur");
     await timeout();
+    
     assert.equal(parser.getText(), "?2");
   });
 });
