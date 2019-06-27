@@ -177,19 +177,28 @@ describe("InputMask", () => {
   
   it("select next node when the current node is finished (no static separator)", async () => {
     const parser = new TextParser({
-      tokens: [number(0), number(1)],
-      value: [0, 0],
+      tokens: [number(0), number(1), number(2)],
+      value: [0, 0, 0],
       copyValue: o => o.slice()
     });
     const element = new Element;
     new InputMask(element, parser);
     
-    element.val("10");
+    element.val("100");
     element.setSelection(1, 1);
     element.emit("keypress", {keyCode: "1".charCodeAt(0)});
     element.emit("input");
     await timeout();
+    
     assert.deepStrictEqual(element.getSelection(), {start: 1, end: 2});
+    
+    element.val("120");
+    element.setSelection(2, 2);
+    element.emit("keypress", {keyCode: "2".charCodeAt(0)});
+    element.emit("input");
+    await timeout();
+    
+    assert.deepStrictEqual(element.getSelection(), {start: 2, end: 3});
   });
   
   it("display placeholder after delete", async () => {
