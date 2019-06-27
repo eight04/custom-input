@@ -1,6 +1,8 @@
-var assert = require("assert"),
-	{describe, it} = require("mocha"),
-	{TextParser, InputMask, utils: {Emitter}} = require("../index");
+/* eslint-env mocha */
+
+const assert = require("assert");
+const Emitter = require("event-lite");
+const {TextParser, InputMask} = require("..");
 	
 function createTextParser(options) {
 	function num(i) {
