@@ -7,12 +7,11 @@
     "parser"
   ],
   "scripts": {
-    "test": "eslint **/*.js && mocha",
+    "test": "eslint **/*.js && c8 --reporter lcov mocha",
     "preversion": "npm test",
     "version": "npm run build && git add .",
     "postversion": "git push --follow-tags && npm publish",
-    "build": "rollup -c",
-    "watch": "n-run -w lib/*.js \"npm run build\""
+    "build": "rollup -c"
   },
   "homepage": "https://github.com/eight04/custom-input",
   "bugs": {
@@ -28,18 +27,20 @@
     "url": "https://github.com/eight04/custom-input.git"
   },
   "dependencies": {
-    "event-lite": "^0.1.1"
+    "event-lite": "^0.1.2"
   },
   "devDependencies": {
-    "babel-core": "^6.26.0",
-    "babel-plugin-external-helpers": "^6.22.0",
-    "babel-preset-env": "^1.1.4",
-    "mocha": "^3.2.0",
-    "npm-build-tools": "^2.2.5",
-    "rollup": "^0.50.0",
-    "rollup-plugin-babel": "^3.0.2",
-    "rollup-plugin-commonjs": "^8.2.1",
-    "rollup-plugin-node-resolve": "^3.0.0",
-    "rollup-plugin-uglify": "^2.0.1"
-  }
+    "@babel/core": "^7.4.5",
+    "@babel/preset-env": "^7.4.5",
+    "c8": "^5.0.1",
+    "mocha": "^6.1.4",
+    "rollup": "^1.16.2",
+    "rollup-plugin-babel": "^4.3.3",
+    "rollup-plugin-cjs-es": "^0.9.0",
+    "rollup-plugin-node-resolve": "^5.1.0",
+    "rollup-plugin-uglify": "^6.0.2"
+  },
+  "eslintIgnore": [
+    "dist"
+  ]
 }

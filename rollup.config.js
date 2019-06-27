@@ -1,7 +1,7 @@
 import resolve from "rollup-plugin-node-resolve";
-import commonjs from "rollup-plugin-commonjs";
+import cjs from "rollup-plugin-cjs-es";
 import babel from "rollup-plugin-babel";
-import uglify from "rollup-plugin-uglify";
+import {uglify} from "rollup-plugin-uglify";
 
 export default {
 	input: "index.js",
@@ -12,16 +12,10 @@ export default {
 	},
 	plugins: [
 		resolve(),
-		commonjs(),
+		cjs({nested: true}),
 		babel(),
-		// https://github.com/rollup/rollup/issues/1595
-		{
-			name: "rollup-plugin-trim-async-generator",
-			transform(code, id) {
-				if (id != "\0babelHelpers") return;
-				return code.replace(/export var asyncGenerator[\s\S]*?}\(\);/, "");
-			}
-		},
-		uglify()
+		uglify({
+      ie8: true
+    })
 	]
 };
