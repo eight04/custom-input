@@ -7,6 +7,7 @@ const {TextParser, InputMask} = require("..");
 
 const number = i => ({
   type: "number",
+  placeholder: "?",
   minLength: 1,
   maxLength: 1,
   extract: o => o[i],
@@ -189,5 +190,26 @@ describe("InputMask", () => {
     element.emit("input");
     await timeout();
     assert.deepStrictEqual(element.getSelection(), {start: 1, end: 2});
+  });
+  
+  it("display placeholder after delete", async () => {
+    const parser = new TextParser({
+      tokens: [number(0), number(1)],
+      value: [0, 0],
+      copyValue: o => o.slice()
+    });
+    const element = new Element;
+    new InputMask(element, parser);
+    
+    element.val("12");
+    element.setSelection(0, 1);
+    element.emit("keydown", {keyCode: 46});
+    element.val("2");
+    element.setSelection(0, 0);
+    element.emit("input");
+    await timeout();
+    element.emit("blur");
+    await timeout();
+    assert.equal(parser.getText(), "?2");
   });
 });
