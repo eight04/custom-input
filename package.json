@@ -44,5 +44,9 @@
   },
   "eslintIgnore": [
     "dist"
+  ],
+  "files": [
+    "lib",
+    "dist"
   ]
 }
