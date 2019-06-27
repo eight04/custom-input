@@ -16,5 +16,8 @@
 		"parserOptions": {
 			"sourceType": "module"
 		}
-	}]
+	}],
+  "parserOptions": {
+    "ecmaVersion": 2019
+  }
 }
