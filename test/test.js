@@ -1,6 +1,38 @@
-var assert = require("assert"),
-	{describe, it} = require("mocha"),
-	{TextParser, InputMask, utils: {Emitter}} = require("../index");
+/* eslint-env mocha */
+
+const assert = require("assert");
+const Emitter = require("event-lite");
+const sinon = require("sinon");
+const {TextParser, InputMask} = require("..");
+
+const number = i => ({
+  type: "number",
+  placeholder: "?",
+  minLength: 1,
+  maxLength: 1,
+  extract: o => o[i],
+  restore: (o, v) => o[i] = v,
+  add: (o, d) => o[i] += d
+});
+
+const string = v => ({
+  type: "static",
+  value: v
+});
+
+function timeout(time = 0) {
+  return new Promise(r => setTimeout(r, time));
+}
+
+function keyEvent(keyCode) {
+  if (typeof keyCode === "string") {
+    keyCode = keyCode.charCodeAt(0);
+  }
+  return {
+    keyCode,
+    preventDefault: sinon.fake()
+  };
+}
 	
 function createTextParser(options) {
 	function num(i) {
@@ -114,30 +146,119 @@ describe("TextParser", () => {
 });
 
 describe("InputMask", () => {
-	
-	it("zero-length placeholder", () => {
-		var parser = createTextParser({placeholder: ""}),
-			element = new Element,
-			mask = new InputMask(element, parser);
+	it("work with zero-length placeholder", async () => {
+		const parser = createTextParser({placeholder: ""});
+    const element = new Element;
+		const mask = new InputMask(element, parser);
+    const onChange = sinon.fake();
+    parser.on("change", onChange);
+    const onDigest = sinon.fake();
+    mask.on("digest", onDigest);
+    
+    element.val("192.168.0.1");
+    element.emit("input");
+    await timeout();
+    assert.equal(onChange.callCount, 1);
+    assert.deepStrictEqual(onChange.lastCall.args[0], [192, 168, 0, 1]);
 			
-		function test(text, event, value) {
-			return new Promise(resolve => {
-				var handle = event == "change" ? parser : mask;
-				handle.once(event, result => {
-					if (event == "change") {
-						assert.deepEqual(value, result);
-					} else {
-						assert.equal(result.code, value);
-					}
-					resolve();
-				});
-				element.value = text;
-				element.emit("input");
-			});
-		}
-			
-		return test("192.168.0.1", "change", [192, 168, 0, 1]).then(
-			() => test("...", "digest", "NOT_INIT")
-		);
+    element.val("...");
+    element.emit("input");
+    await timeout();
+    assert.equal(onDigest.callCount, 1);
+    assert.equal(onDigest.lastCall.args[0].code, "NOT_INIT");
 	});
+  
+  it("select next node when the current node is finished", async () => {
+    const parser = new TextParser({
+      tokens: [number(0), string("-"), number(1)],
+      value: [0, 0],
+      copyValue: o => o.slice()
+    });
+    const element = new Element;
+    new InputMask(element, parser);
+    
+    element.val("1-0");
+    element.setSelection(1, 1);
+    element.emit("keypress", {keyCode: "1".charCodeAt(0)});
+    element.emit("input");
+    await timeout();
+    assert.deepStrictEqual(element.getSelection(), {start: 2, end: 3});
+  });
+  
+  it("select next node when the current node is finished (no static separator)", async () => {
+    const parser = new TextParser({
+      tokens: [number(0), number(1), number(2)],
+      value: [0, 0, 0],
+      copyValue: o => o.slice()
+    });
+    const element = new Element;
+    new InputMask(element, parser);
+    
+    element.val("100");
+    element.setSelection(1, 1);
+    element.emit("keypress", {keyCode: "1".charCodeAt(0)});
+    element.emit("input");
+    await timeout();
+    
+    assert.deepStrictEqual(element.getSelection(), {start: 1, end: 2});
+    
+    element.val("120");
+    element.setSelection(2, 2);
+    element.emit("keypress", {keyCode: "2".charCodeAt(0)});
+    element.emit("input");
+    await timeout();
+    
+    assert.deepStrictEqual(element.getSelection(), {start: 2, end: 3});
+  });
+  
+  it("display placeholder after delete entire node", async () => {
+    const parser = new TextParser({
+      tokens: [number(0), number(1)],
+      value: [1, 2],
+      copyValue: o => o.slice()
+    });
+    const element = new Element;
+    new InputMask(element, parser);
+    
+    element.setSelection(0, 0);
+    element.emit("focus");
+    await timeout();
+    
+    assert.deepStrictEqual(element.getSelection(), {start: 0, end: 1});
+    
+    const e = keyEvent(46);
+    element.emit("keydown", e);
+    assert.equal(e.preventDefault.callCount, 1);
+    await timeout();
+    
+    element.emit("blur");
+    await timeout();
+    
+    assert.equal(parser.getText(), "?2");
+  });
+  
+  it("arrow keys", async () => {
+    const parser = new TextParser({
+      tokens: [number(0), number(1), number(2)],
+      value: [0, 0, 0],
+      copyValue: o => o.slice()
+    });
+    const element = new Element;
+    new InputMask(element, parser);
+    
+    element.val("000");
+    element.setSelection(0, 0);
+    element.emit("focus");
+    await timeout();
+    
+    element.emit("keydown", keyEvent(39)); // right
+    await timeout();
+    
+    assert.deepStrictEqual(element.getSelection(), {start: 1, end: 2});
+    
+    element.emit("keydown", keyEvent(38)); // up
+    await timeout();
+    
+    assert.equal(element.val(), "010");
+  });
 });

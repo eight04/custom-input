@@ -3,30 +3,32 @@ Custom Input
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/4e3a7cbd57cc4241950c12256c7cac34)](https://www.codacy.com/app/eight04/custom-input?utm_source=github.com&utm_medium=referral&utm_content=eight04/custom-input&utm_campaign=badger)
 
-A library helps you create custom input elements in the browser. Add mask and validation to *input[text]*! Originally included in [angular-datetime](https://github.com/eight04/angular-datetime).
+A library helping you create custom input elements in the browser. Add mask and validation to *input[text]*! Originally included in [angular-datetime](https://github.com/eight04/angular-datetime).
 
-It has 2 components, *InputMask* and *TextParser*. Import them with `require`:
+Installation
+------------
+
+Via npm:
+
+```
+npm install custom-input
+```
 
 ```javascript
 var {InputMask, TextParser} = require("custom-input");
 ```
 
-Or you can use the pre-built dist:
+There is also a pre-built dist which can be used in the browser:
 
 ```html
 <!-- export cusomInput into global -->
-<script src="path/to/custom-input/dist/custom-input.js"></script>
+<script src="https://unpkg.com/custom-input@0.3.1/dist/custom-input.js"></script>
 ```
 ```javascript
 var {InputMask, TextParser} = customInput;
 ```
 
-The pre-built dist is compatible with IE 8 by transpiling using Babel and babel-polyfill.
-
-Installation
-------------
-
-	npm install -S custom-input
+The pre-built dist is compatible with IE 8, but you have to polyfill missing APIs by including [@babel/polyfill](https://babeljs.io/docs/en/babel-polyfill).
 	
 Demo
 ----
@@ -37,170 +39,236 @@ https://rawgit.com/eight04/custom-input/master/demo.html
 API reference
 -------------
 
-Both TextParser and InputMask extend [event-lite](https://www.npmjs.com/package/event-lite).
+This module exports following members:
+
+* `TextParser` - a parser which can parse text into model value.
+* `InputMask` - bind a parser with an `input` element and create a nice input mask.
+* `utils` - a set of utilities used by the library.
 
 ### TextParser
 
-Create a stateful parser which can convert a model to a string and vise versa. The parser uses a series of Token to form a text template. For example, the IP address: `xxx.xxx.xxx.xxx` can be represented with 7 tokens, which are *Number{1,3}*, *String "."*, *Number{1,3}*, *String "."*, *Number{1,3}*, *String "."*, *Number{1,3}*. The parser will try to parse text along the tokens, extract the value from text and convert them into the model.
+```js
+new TextParser({
+  tokens: Array<Token>,
+  value: any,
+  copyValue: value => clonedValue
+})
+  => parser
+```
 
-#### constructor(option: Object)
+Create a stateful parser which can convert a model value to a string and vise versa. The parser uses a series of `Token` to construct a template. For example, the IP address: `xxx.xxx.xxx.xxx` can be represented with 7 tokens, which are *Number{1,3}*, *String "."*, *Number{1,3}*, *String "."*, *Number{1,3}*, *String "."*, *Number{1,3}*. The parser will try to parse text along the tokens, extract the value from text and store the value in the model.
 
-##### option object
+* `tokens` is a list of [Token](#token).
+* `value` is the initial model value.
+* `copyValue` is a function which can clone the model.
 
-* option.tokens - A list of definition token. See [Token](#token).
-* option.value - Initial model value.
-* option.copyValue - A function to clone the model. `value => clone(value)`
+#### parser.parse
 
-#### TextParser.parse(text: String) => textParser
+```js
+parser.parse(text: String) => parser
+```
 
-Parse the string and create a model value. The value is saved in the parser.
+Parse a string and store the value in the parser.
 
-#### TextParser.setValue(model, preserveEmptyFlag) => textParser
+This method returns the parser itself.
 
-Set model value and convert to text.
+#### parser.setValue
 
-If preserveEmptyFlag is not true, parser will reset all empty flag to false before converting to text.
+```js
+parser.setValue(value, preserveEmpty? = false) => parser
+```
 
-#### TextParser.getValue() => model
+Set a new model value and format text according to the new value.
 
-Get model value in the parser.
+If `preserveEmpty` is `false`, parser will the reset empty flag of all nodes.
 
-#### TextParser.getText() => String
+This method returns the parser itself.
 
-Get text in the parser.
+#### parser.getValue
 
-#### TextParser.isEmpty([text: String]) => boolean
+```js
+parser.getValue() => value
+```
 
-If text is supplied, parse the text without saving data and check if the text contains empty node.
+Get the model value.
 
-If omitted, check if the text in the parser contains empty node.
+#### parser.getText
 
-#### TextParser.isInit() => boolean
+```js
+parser.getText() => text: String
+```
 
-Return true if there is no empty node.
+Get formatted text.
 
-#### TextParser.unset() => textParser
+#### parser.isEmpty
 
-Mark every nodes empty.
+```js
+parser.isEmpty(text?: String) => Boolean
+```
 
-#### TextParser.getNodes([name: string]) => Array of Node
+If `text` is supplied, parse the text without saving data and check if nodes contains empty node.
 
-Get node list. If `name` is provided, return the nodes having the same name.
+If some nodes are set, return `false`.
 
-### TextParser events
+#### parser.isInit
 
-* change - Emit when model changed.
+```js
+parser.isInit() => Boolean
+```
+
+If some nodes are empty, return `false`.
+
+> **Note**: it is possible that `parser.isEmpty()` and `parser.isInit()` both returns `true`, which means all nodes are static.
+
+#### parser.unset
+
+```js
+parser.unset() => parser
+```
+
+Unset every node. Mark them as empty.
+
+#### parser.getNodes
+
+```js
+parser.getNodes(name?: String) => Array<Node>
+```
+
+Get a list of nodes. If `name` is provided, return the nodes having the same name.
+
+#### parser events
+
+* `change` - Emit when the model value is changed.
 
 ### Token
 
 A token is an object that contains special information for parsing. Each token may represents a static string, a number, or a choice list.
 
-#### token.name: String, optional
+#### Static token
 
-Optional name. See `TextParser.getNodes()`.
+```js
+{
+  type: "static",
+  value: String
+}
+```
 
-#### token.type: String, required
+Set `type` to `"static"` to create a static token. It represent a static string.
 
-Can be `static`, `number`, or `select`, which represents 3 different types of node.
+`value` is the static string value.
 
-#### token.placeholder: String, required if type is not static
+#### Mutable token
 
-A placeholder to show when the node is empty.
+Mutable tokens includes `number` token and `select` token. Some properties are shared with all types of mutable tokens:
 
-#### token.value: String, required if type is static
+```js
+{
+  name?: String,
+  placeholder: String,
+  prior?: Number,
+  extract: (modelValue) => nodeValue,
+  restore: (modelValue, nodeValue) => void,
+  add: (modelValue, increment) => void
+}
+```
 
-The string value.
+* `name` property should be used with `parser.getNodes()`. There is no need to set a name if you are not going to retrieve the node.
 
-#### token.select: Array of String, required if type is select
+* `placeholder` is a string, which is displayed when the node is empty e.g. after calling `parser.unset()`.
 
-A list of word that the string should match.
+* `prior` controls which node should be evaluated first. If there are two nodes whose value has been changed in the same time (via `parser.parse`), the node having higher prior will apply the change to the model first.
 
-When converting text to model, parser will get the index of matched text, plus 1, then save as node value.
+  Usually, it doesn't matter which node is evaluated first because the model value stores node values independently. But if you want to create a date string parser, you may have to decide the order carefully since each node will affect each other (e.g. the month may change when the day is changed/overflowed).
+  
+* `extract`, `restore`, and `add` are three hooks. The parser will call them when it want to perform corresponded operation to the model value.
 
-#### token.prior: Number, optional
+  `nodeValue` is always a number. For `number` node, it is the node value. For `select` node, it is the index starting from 1.
+  
+  `increment` is an integer, can be negative.
+  
+##### number
 
-If there are two nodes whose value has been changed in the same time, the node having higher prior will apply the change to the model first.
+```js
+{
+  type: "number",
+  minLength?: Number,
+  maxLength?: Number,
+  min?: Number,
+  max?: Number
+}
+```
 
-Next 4 optional properties only affect tokens with number type:
+* `minLength` and `maxLength` controls how the number should be represented. The formatter will zero-pad the value when the length is shorter than `minLength`, and will trim the text when the length is longer than `maxLength`.
 
-#### token.minLength: Number
+* `min` and `max` controls the bounding of the number. You may want to set `min` to `0` so it won't become negative. It also affect the input mask. If the node value hits the limit, up/down arrow keys will be disabled.
 
-The min length of the number.
+##### select
 
-#### token.maxLength: Number
+```js
+{
+  type: "select",
+  select: Array<option: String>
+}
+```
 
-The max length of the number.
+* `select` is a list of string that the text should match one of them.
 
-#### token.min: Number
+  When converting text to model value, the parser will find the index of matched text, plus 1, then save it as node value (store it via the `restore` hook).
 
-The min value of the number.
-
-#### token.max: Number
-
-The max value of the number.
-
-Following functions are used to manipulate model value.
-	
-#### token.extract(model) => Number, required
-
-A function that can extract node value from the model. It is used to convert model value to string.
-
-#### token.add(model, diff: Number, parser: TextParser) => model, required
-
-A function that can add node value to the model.
-
-#### token.restore(model, nodeValue: number, parser: TextParser) => model, required
-
-A function that can restore node value to the model.
 
 ### InputMask
 
-InputMask is built on top of an input element and a TextParser. It handles most of the HTML stuff like listening to events, tracking selection range of the input element...
+InputMask is built with an `<input>` element and a `TextParser`. It handles most of the HTML stuff like listening to events, tracking selection range of the input element, etc.
 
-After the mask is applied, user can only edit partial text that is not defined as "static". User can also press left/right arrow keys or tab to navigate between each non-static node. Use up/down arrow keys to increase/decrease node value. If it is a "select" node, it will act like a typeahead component. If the user try to delete the node, it will be replaced by a placeholder.
+After the mask is applied, users can only edit part of the text that is not defined as "static". Users can also press left/right arrow keys or tab to navigate between each mutable node. Use up/down arrow keys to increase/decrease node value. If it is a "select" node, it will act like a typeahead component. If the user tries to delete the node, it will be replaced by the placeholder.
 
-#### constructor(element: Element, textParser, separators = "")
+```js
+new InputMask(element: Element, parser: TextParser, separators: String = "") => mask
+```
 
-Arguments:
+* `element` is an object implementing [Element interface](#element-interface).
+* `parser` is a parser object.
+* `separators` - apart from tab key, add other keys that can navigate through nodes.
 
-* element - An Element object follows [Element interface](#element-interface).
-* textParser - A parser object.
-* separators - Apart from tab key, add other keys that can navigate through nodes.
+#### mask.digest
 
-#### InputMask.digest(node: Node, text: String, fixError: Boolean)
+```js
+mask.digest(node: Node | void, text: String, fixError?: Boolean = false)
+```
 
-The mask will try to parse the text. If there are any errors, try fixing it and parse it again.
+The mask will try to parse the text. If an error occurs, try fixing it and parse it again.
 
-Arguments:
+* `node` - can be `null`
 
-* node - can be null
+	If `node` is `null`, the mask will parse the text along with all nodes.
+  
+	If `node` is a node object, the mask will treat the text as the view value of the node.
 
-	If node is null, digest will parse text as `textParser.parse(text)`.
-	If node is a Node, digest will parse text as `node.parse(text)`.
+* `text` is the text which should be parsed.
 
-* text
+* `fixError`
 
-	The text to parse.
+	If `fixError` is `true`, the mask will try hardest to fix the error, even revert back the text to the previous state.
 
-* fixError - default to false
-
-	If fixError is true, digest will try hardest to fix the error, even revert back the text to previous state.
-
-	If fixError is false, digest will fix those fatal error, but leaves `NUMBER_TOOSHORT`, `LEADING_ZERO`...
+	If `fixError` is `false`, it will fix fatal errors, but leave `NUMBER_TOOSHORT`, `LEADING_ZERO`, etc.
 	
-### InputMask events
+#### mask events
 
-* digest - get parsing error while digesting. It might fire multiple times during one digest.
+* `digest` - emit when an digest error occurs. It may fire multiple times during one digest.
 
 ### Element interface
 
 The Element interface wraps native input element and exposes some methods similar to jQuery.
 
-#### Element.on(eventType: String, callback: Function)
+#### Element.on
 
-Wrap addEventListener. InputMask will listen to `input` event for text update, you might want to proxy it for cross browser compatibility.
+```js
+Element.on(eventType: String, callback: (event) => void) => void
+```
 
-InputMask uses following events:
+Wrap `addEventListener`. `InputMask` will listen to `input` event for text update, you might want to proxy it for cross browser compatibility.
+
+`InputMask` uses following events:
 
 * mousedown
 * click
@@ -210,41 +278,87 @@ InputMask uses following events:
 * keypress
 * blur
 
-#### Element.getSelection() => Range object or null
+#### Element.getSelection
 
-Range object has two properties, start and end, showing the current state of the selection.
+```js
+Element.getSelection() => Range | void
+```
 
-Return null if the element is not focused.
+Get the current selection from the input element. Return `null` if the element is not focused/selected.
 
-#### Element.setSelection(start: Number, end: Number)
 
-Set selection on the input. You might need to check if the input is active or some browsers will try to focus the input when selection changed.
+`Range` has following shape:
 
-#### Element.val([text: String])
+```js
+{
+  start: Number,
+  end: Number
+}
+```
 
-Set/get the value of the input. Like jQuery.
+#### Element.setSelection
+
+```js
+Element.setSelection(start: Number, end: Number) => void
+```
+
+Set selection on the input. You may need to check if the input is active or some browsers will try to focus the input element when the selection changed.
+
+#### Element.val
+
+```js
+Element.val() => String
+Element.val(text: String) => void
+```
+
+Get or set the value of the input element. Like jQuery.
 	
 ### utils
 
-#### utils.num2str(number, minLength, maxLength) => String
+A set of utilities.
 
-Convert number to string, padding with zeros and trim out text after maxLength.
+#### utils.num2str
+
+```js
+utils.num2str(number, minLength, maxLength) => String
+```
+
+Convert a number to a string. Pad the text with zero and trim the text if needed.
 	
 Changelog
 ---------
+
+* 0.4.0 (Jun 27, 2019)
+
+  - Some changes to `InputMask`:
+  
+    - **Breaking: deleting the entire node will reset the node now.**
+    - **Breaking: prefer the node with lower index when finding the nearest node.**
+    
+  - Bump dependencies.
+
 * 0.3.1 (Sep 17, 2017)
+
 	- Fix: use unpkg field in package.json.
+  
 * 0.3.0 (Sep 17, 2017)
+
 	- **Change: replace node's events with event-lite.**
+  
 * 0.2.1 (Jul 24, 2017)
+
 	- Add `textParser` arg to `token.add` and `token.restore`.
 	- Add `name` attribute to `Node`.
 	- Add `name` arg to `TextParser.getNodes`.
+  
 * 0.2.0 (Mar 9, 2017)
+
 	- Allow using empty string as placeholder
 	- The "change" event of TextParser now sends model value to listener.
 	- **Drop utils.Emitter. Use node's [events](https://nodejs.org/api/events.html).**
 	- **Change the event name of InputMask: error -> digest.**
 	- **Drop angular module, always use window.customInput.**
+  
 * 0.1.0 (Dec 19, 2016)
+
 	- First release.
