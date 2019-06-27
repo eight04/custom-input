@@ -23,6 +23,16 @@ const string = v => ({
 function timeout(time = 0) {
   return new Promise(r => setTimeout(r, time));
 }
+
+function keyEvent(keyCode) {
+  if (typeof keyCode === "string") {
+    keyCode = keyCode.charCodeAt(0);
+  }
+  return {
+    keyCode,
+    preventDefault: () => {}
+  };
+}
 	
 function createTextParser(options) {
 	function num(i) {
@@ -227,5 +237,30 @@ describe("InputMask", () => {
     await timeout();
     
     assert.equal(parser.getText(), "?2");
+  });
+  
+  it("arrow keys", async () => {
+    const parser = new TextParser({
+      tokens: [number(0), number(1), number(2)],
+      value: [0, 0, 0],
+      copyValue: o => o.slice()
+    });
+    const element = new Element;
+    new InputMask(element, parser);
+    
+    element.val("000");
+    element.setSelection(0, 0);
+    element.emit("focus");
+    await timeout();
+    
+    element.emit("keydown", keyEvent(39)); // right
+    await timeout();
+    
+    assert.deepStrictEqual(element.getSelection(), {start: 1, end: 2});
+    
+    element.emit("keydown", keyEvent(38)); // up
+    await timeout();
+    
+    assert.equal(element.val(), "010");
   });
 });
