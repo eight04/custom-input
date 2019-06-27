@@ -327,6 +327,16 @@ Convert a number to a string. Pad the text with zero and trim the text if needed
 	
 Changelog
 ---------
+
+* 0.4.0 (Jun 27, 2019)
+
+  - Some changes to `InputMask`:
+  
+    - **Breaking: deleting the entire node will reset the node now.**
+    - **Breaking: prefer the node with lower index when finding the nearest node.**
+    
+  - Bump dependencies.
+
 * 0.3.1 (Sep 17, 2017)
 
 	- Fix: use unpkg field in package.json.
