@@ -1,6 +1,8 @@
 Custom Input
 ============
 
+[![Build Status](https://travis-ci.com/eight04/custom-input.svg?branch=master)](https://travis-ci.com/eight04/custom-input)
+[![codecov](https://codecov.io/gh/eight04/custom-input/branch/master/graph/badge.svg)](https://codecov.io/gh/eight04/custom-input)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/4e3a7cbd57cc4241950c12256c7cac34)](https://www.codacy.com/app/eight04/custom-input?utm_source=github.com&utm_medium=referral&utm_content=eight04/custom-input&utm_campaign=badger)
 
 A library helping you create custom input elements in the browser. Add mask and validation to *input[text]*! Originally included in [angular-datetime](https://github.com/eight04/angular-datetime).
